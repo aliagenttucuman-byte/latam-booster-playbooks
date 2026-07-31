@@ -12,6 +12,23 @@ Setup comun para trabajar los 6 repos del hands-on. Correr esto UNA vez al arran
 
 Todos los comandos asumen una laptop Dell LATAM Windows + PowerShell (la que te da LATAM) y un servidor Linux auxiliar para tareas de forensics (opcional).
 
+Volver al [README](./00-README.md). Terminos: [glosario](./01-glossary.md).
+
+---
+
+## Indice
+
+- [Antes de arrancar](#antes-de-arrancar)
+- [Setup en la laptop Dell LATAM (Windows / PowerShell)](#setup-en-la-laptop-dell-latam-windows--powershell)
+- [Setup en el servidor Linux auxiliar (opcional para forensics)](#setup-en-el-servidor-linux-auxiliar-opcional-para-forensics)
+- [Checklist final](#checklist-final)
+- [Pitfalls comunes en el setup](#pitfalls-comunes-en-el-setup)
+  - [Pitfall S1 - setx /M falla por UAC](#pitfall-s1---setx-m-falla-por-uac-en-laptop-dell-13-jul-2026)
+  - [Pitfall S2 - Backtick vs caret](#pitfall-s2---backtick-vs-caret-en-powershell-13-jul-2026)
+  - [Pitfall S3 - pip.ini filtra secretos](#pitfall-s3---pip-config-globalextra-index-url-filtra-secretos-13-jul-2026)
+  - [Pitfall S4 - HTTP Basic Access denied](#pitfall-s4---http-basic-access-denied-al-clonar-repo-privado-08-jul-2026)
+  - [Pitfall S5 - Email de commit incorrecto](#pitfall-s5---email-de-commit-incorrecto-15-jul-2026)
+
 ---
 
 ## Antes de arrancar

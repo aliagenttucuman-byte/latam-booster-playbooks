@@ -9,6 +9,24 @@ last_validated: 2026-07-31
 
 Terminos que aparecen en todos los playbooks. Si algo no lo entendes en un .md, buscalo aca primero.
 
+Volver al [README](./00-README.md).
+
+---
+
+## Indice
+
+- [Organizacional](#organizacional) - Booster, Buddy, CPM, Staff, ADO
+- [Plataforma](#plataforma) - Cosmos, Backstage, Data Hub, Sandbox, BQO
+- [Infraestructura](#infraestructura) - GCS, BQ, Vertex, Cloud Functions, Artifact Registry, Terraform
+- [CI/CD](#cicd) - Pipeline, Stage, MR, Terraform apply policy, CODEOWNERS
+- [GitLab](#gitlab) - Path canonico, PAT, Grupo raiz, ai-sharedservices
+- [Modelo ML](#modelo-ml) - Propension, Master table, 6 fuentes, RFM, HUB, XGBoost, Stratify
+- [GenAI](#genai) - LangGraph, Light RAG, GenAI Gateway, Chatbot GenAI
+- [GCP](#gcp) - Project ID, us-east1, Service Account, IAM Bindings
+- [Namespace ob](#namespace-ob) - Convencion de nombres de repos
+- [Terraform apply policy](#terraform-apply-policy) - Reglas de plan vs apply
+- [Errores clasicos](#errores-clasicos-busca-aca-antes-de-googlear)
+
 ---
 
 ## Organizacional
@@ -127,6 +145,40 @@ Terminos que aparecen en todos los playbooks. Si algo no lo entendes en un .md, 
 **Service Account (SA)**. Cuenta de servicio GCP. Los pipelines de CI usan `cosmos-cicd@<project>.iam.gserviceaccount.com`.
 
 **IAM Bindings**. Permisos entre SA y recursos. Definidos en Terraform (`gcs_bucket_iam`, `bq_dataset_iam`).
+
+---
+
+## Namespace ob
+
+Convencion de nombre para los repos del hands-on: `<username>-ob-<pieza>`.
+
+En mi caso:
+- `nelsonacosta-ob-infraestructure` (typo `e` incluido, es asi en LATAM)
+- `nelsonacosta-ob-orchestrator`
+- `nelsonacosta-ob-ml-propension`
+- `nelsonacosta-ob-data-to-bucket`
+- `nelsonacosta-ob-ingest-ga4`
+- `nelsonacosta-ob-chatbot-ob`
+
+El sufijo `-ob` viene de "onboarding". Es el marker que usa CPM para distinguir sandboxes de Boosters de repos productivos.
+
+---
+
+## Terraform apply policy
+
+Reglas canonicas para `terraform` en Cosmos:
+
+| Contexto | `terraform plan` | `terraform apply` |
+|---|---|---|
+| Branch feature | Si (CI) | NO (bloqueado) |
+| MR abierto a `develop` | Si (CI) | NO (bloqueado) |
+| Post-merge a `develop` | Si (CI) | Si (CI, solo en `develop`) |
+| Post-merge a `main` | Si (CI) | Si (CI, solo prod) |
+| Local (laptop Dell) | Si | NO (no tenes las credenciales) |
+
+Consecuencia practica: pipeline verde en tu branch NO significa que la infra se aplico. Solo el pipeline post-merge en `develop` aplica.
+
+Contraparte de aprobacion: reviewer aprueba el MR, autor mergea. Nunca al reves.
 
 ---
 
