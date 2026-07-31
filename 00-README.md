@@ -65,12 +65,13 @@ Snapshot de commits y MRs mergeados a `develop` por repo, extraído vía GitLab 
 | 04 | [data-to-bucket](./repos/04-data-to-bucket.md) | 7 | 3 | ~14 | 5 | 65% | 22-jul → 23-jul |
 | 05 | [ingest-ga4](./repos/05-ingest-ga4.md) | 5 | 2 | ~5 | 5 | 65% | 17-jul → 20-jul |
 | 06 | [chatbot-ob](./repos/06-chatbot-ob.md) | 1 | 0 | 81 | 5 | N/A | 23-jul → 23-jul |
-| **Totales** | | **74** | **22** | **261** | **141** | **54%** | 13-jul → 30-jul |
+| 07 | [chatbot-backend](./repos/07-chatbot-backend.md) | 1 | 0 | 31 | 0 | N/A | 23-jul → 23-jul |
+| **Totales** | | **75** | **22** | **292** | **141** | **48%** | 13-jul → 30-jul |
 
 Observaciones:
 
 - `infraestructure` y `ml-propension` concentran el **77%** de commits y MRs.
-- `orchestrator` y `chatbot-ob` tienen 1 commit / 0 MRs: scaffolds Copier con ajuste mínimo.
+- `orchestrator`, `chatbot-ob` y `chatbot-backend` tienen 1 commit / 0 MRs: scaffolds Copier con ajuste mínimo.
 - Hands-on completo en **18 días calendario** (13-jul → 30-jul-2026).
 
 ---
@@ -85,18 +86,22 @@ graph TD
   ML[03-ml-propension<br/>XGBoost + master table]
   D2B[04-data-to-bucket<br/>Cloud Functions ingest]
   GA4[05-ingest-ga4<br/>Ingest GA4 a BQ]
-  CHAT[06-chatbot-ob<br/>Chatbot GenAI]
+  CHAT[06-chatbot-ob<br/>UI React + BFF]
+  BE[07-chatbot-backend<br/>LangServe + Cosmos GenAI Gateway]
 
   INFRA --> ORCH
   INFRA --> ML
   INFRA --> D2B
   INFRA --> GA4
   INFRA --> CHAT
+  INFRA --> BE
 
   D2B --> ML
   GA4 --> ML
   ORCH --> ML
-  ML --> CHAT
+  ML --> D2B
+  D2B -.futuro RAG.-> BE
+  BE --> CHAT
 
   style INFRA fill:#ffd700,color:#000
   style ML fill:#87ceeb,color:#000

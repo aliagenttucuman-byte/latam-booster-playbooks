@@ -1,0 +1,16 @@
+llm:
+    model: gemini-2.5-flash
+    temperature: 0.1
+
+api_prompt: |-
+  """
+  Imprime la frase 'Hola Mundo!' en el siguiente idioma: {language}
+  """
+
+
+
+
+
+
+
+
