@@ -1,0 +1,27 @@
+# Secretos - NUNCA commitear
+*.token
+*.key
+*.pem
+.env
+.env.*
+!.env.example
+secrets/
+credentials/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Logs y temporales
+*.log
+tmp/
+scratch/
