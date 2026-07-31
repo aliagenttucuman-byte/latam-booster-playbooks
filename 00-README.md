@@ -62,7 +62,7 @@ Snapshot de commits y MRs mergeados a `develop` por repo, extraído vía GitLab 
 | 01 | [infraestructure](./repos/01-infraestructure.md) | 23 | 9 | 19 | 19 | 100% | 13-jul → 29-jul |
 | 02 | [orchestrator](./repos/02-orchestrator.md) | 1 | 0 | 31 | 20 | 65% | 15-jul → 15-jul |
 | 03 | [ml-propension](./repos/03-ml-propension.md) | 34 | 8 | 60 | 38 | 63% | 16-jul → 30-jul |
-| 04 | [data-to-bucket](./repos/04-data-to-bucket.md) | 10 | 3 | 29 | 22 | 76% | 22-jul → 23-jul |
+| 04 | [data-to-bucket](./repos/04-data-to-bucket.md) | 7 | 3 | ~14 | 5 | 65% | 22-jul → 23-jul |
 | 05 | [ingest-ga4](./repos/05-ingest-ga4.md) | 5 | 2 | 41 | 22 | 54% | 15-jul → 20-jul |
 | 06 | [chatbot-ob](./repos/06-chatbot-ob.md) | 1 | 0 | 81 | 20 | 25% | 23-jul → 23-jul |
 | **Totales** | | **74** | **22** | **261** | **141** | **54%** | 13-jul → 30-jul |
