@@ -69,7 +69,7 @@ else
 fi
 
 # 5. Pitfalls con fecha
-PITFALLS=$(grep -cE '^### Pitfall [0-9]+ .*\([0-9]{2}-[a-zA-Z]{3}-[0-9]{4}\)' "$FILE" || true)
+PITFALLS=$(grep -cE '^### Pitfall [A-Z]?[0-9]+ .*\([0-9]{2}-[a-zA-Z]{3}-[0-9]{4}\)' "$FILE" || true)
 echo "5. Pitfalls con fecha DD-MMM-YYYY: $PITFALLS"
 if [ "$PITFALLS" -lt 3 ]; then
   echo "   FAIL: minimo 3 pitfalls con fecha real"

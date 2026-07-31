@@ -53,6 +53,29 @@ latam-booster-playbooks/
 
 ---
 
+## Actividad real en `develop` (al 31-jul-2026)
+
+Snapshot de commits y MRs mergeados a `develop` por repo, extraído vía GitLab API:
+
+| # | Repo | Commits | MRs | Archivos totales | Archivos tocados | % tocado | Rango |
+|---|---|---:|---:|---:|---:|---:|---|
+| 01 | [infraestructure](./repos/01-infraestructure.md) | 23 | 9 | 19 | 19 | 100% | 13-jul → 29-jul |
+| 02 | [orchestrator](./repos/02-orchestrator.md) | 1 | 0 | 31 | 20 | 65% | 15-jul → 15-jul |
+| 03 | [ml-propension](./repos/03-ml-propension.md) | 34 | 8 | 60 | 38 | 63% | 16-jul → 30-jul |
+| 04 | [data-to-bucket](./repos/04-data-to-bucket.md) | 10 | 3 | 29 | 22 | 76% | 22-jul → 23-jul |
+| 05 | [ingest-ga4](./repos/05-ingest-ga4.md) | 5 | 2 | 41 | 22 | 54% | 15-jul → 20-jul |
+| 06 | [chatbot-ob](./repos/06-chatbot-ob.md) | 1 | 0 | 81 | 20 | 25% | 23-jul → 23-jul |
+| **Totales** | | **74** | **22** | **261** | **141** | **54%** | 13-jul → 30-jul |
+
+Observaciones:
+
+- `infraestructure` y `ml-propension` concentran el **77%** de commits y MRs.
+- `orchestrator` y `chatbot-ob` tienen 1 commit / 0 MRs: scaffolds Copier con ajuste mínimo.
+- Hands-on completo en **18 días calendario** (13-jul → 30-jul-2026).
+
+---
+
+
 ## Mapa de dependencias entre repos
 
 ```mermaid
