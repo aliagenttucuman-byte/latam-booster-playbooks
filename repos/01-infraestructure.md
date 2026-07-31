@@ -26,6 +26,7 @@ fecha: 2026-07-31
 - [Estructura del repo](#estructura-del-repo)
 - [Flujo end-to-end](#flujo-end-to-end)
 - [Pitfalls vividos](#pitfalls-vividos)
+- [Datos y ejecución operativa](#datos-y-ejecución-operativa)
 - [Checklist de entrega](#checklist-de-entrega)
 - [Referencias](#referencias)
 
@@ -63,7 +64,7 @@ Snapshot al 2026-07-31 (rama `develop`):
 | Archivos totales en repo | 19 |
 | Archivos tocados en el historial | 19 (100%) |
 | Rango de fechas | 2026-07-13 → 2026-07-29 |
-| Reviewer principal | nicolascastro.neuralworks |
+| Reviewer principal | <REVIEWER_NEURALWORKS> |
 | Intensidad | **Alta** — toqué el 100% del repo, típico del primero |
 
 Fue **el repo más peleado en Terraform**: acá aprendí Cosmos y me choqué con los [pitfalls](#pitfalls-vividos) de state, IAM y Light RAG location.
@@ -72,7 +73,7 @@ Fue **el repo más peleado en Terraform**: acá aprendí Cosmos y me choqué con
 
 Ver [02-prerequisitos-globales](../02-prerequisitos-globales.md) para el setup común. Específico de este repo:
 
-- Cuenta LATAM `nelson.acosta_ext@latam.com` con acceso a los proyectos GCP:
+- Cuenta LATAM `<TU_EMAIL_EXT>@latam.com` con acceso a los proyectos GCP:
   - `ss-data-dev` (project id del env dev)
   - `ss-data-prod` (project id del env prod)
 - Bucket GCS de Terraform state ya creado por CI (`terraform-state-nelsonacosta-ob-infraestructure`).
@@ -317,6 +318,76 @@ Documentado en el comentario del propio archivo.
 - Cambios chicos → editar los `.tf` directamente.
 - Cambios grandes → PR al template `cosmos-template-infrastructure` (que ya no tengo permiso, así que → Staff LATAM).
 
+## Datos y ejecución operativa
+
+### Artefactos SQL/Dataform en este repo
+
+Ninguno. Este repo es 100% Terraform. Crea infra base (bucket de state, service accounts, workflows configs, secrets) sobre la que después corren orchestrator, ml-propension y data-to-bucket.
+
+### Comandos operativos desde la Dell (PowerShell)
+
+Autenticación GCP:
+
+```powershell
+gcloud auth login
+gcloud auth application-default login
+gcloud config set project latam-hands-on-nelsonacosta-ob
+gcloud config set account [REDACTED]
+```
+
+Ciclo Terraform desde el root del repo (rama `develop`):
+
+```powershell
+cd C:\latam\nelsonacosta-ob-infraestructure
+git checkout develop
+git pull
+
+terraform init -backend-config="bucket=tf-state-nelsonacosta-ob"
+terraform validate
+terraform plan -out=tfplan.out
+terraform apply tfplan.out
+```
+
+Verificación del state remoto en GCS:
+
+```powershell
+gsutil ls gs://tf-state-nelsonacosta-ob/
+gsutil cat gs://tf-state-nelsonacosta-ob/default.tfstate | jq '.resources[] | .type' | sort -u
+```
+
+### Queries de verificación (bq CLI)
+
+Comprobar que los datasets base fueron creados por Terraform:
+
+```powershell
+bq ls --project_id=latam-hands-on-nelsonacosta-ob
+bq show --format=prettyjson latam-hands-on-nelsonacosta-ob:nelsonacosta_ob_dev
+```
+
+### Rollback / re-ejecución
+
+Re-correr solo un módulo sin tocar el resto:
+
+```powershell
+terraform apply -target=module.dataform_repo -auto-approve
+```
+
+Destruir todo (solo en sandbox propio, nunca en shared):
+
+```powershell
+terraform destroy -auto-approve
+```
+
+Ver el diff antes de aplicar sin usar `plan`:
+
+```powershell
+terraform show -json tfplan.out | jq '.resource_changes[] | select(.change.actions[] != "no-op")'
+```
+
+### Assets sanitizados en este repo de playbooks
+
+Ninguno. Este playbook no tiene contraparte en `../assets/dataform/`. Ver [`../assets/terraform/`](../assets/terraform/) si en el futuro se copian módulos sanitizados.
+
 ## Checklist de entrega
 
 Antes de mergear a `master`:
@@ -324,7 +395,7 @@ Antes de mergear a `master`:
 - [ ] `terraform fmt -recursive` (el CI lo valida).
 - [ ] `terraform validate` con workspace `dev`.
 - [ ] Pipeline `develop` verde (validate + plan).
-- [ ] MR aprobado por reviewer (nicolascastro.neuralworks).
+- [ ] MR aprobado por reviewer (<REVIEWER_NEURALWORKS>).
 - [ ] Backstage recognizes el componente (revisar en catalog UI).
 - [ ] Dataset `nelsonacosta_ob_propension_data` visible en `bq ls ss-data-dev:`.
 - [ ] Tabla `customer_predictions` con schema idéntico al de `serving_pipeline.py`.

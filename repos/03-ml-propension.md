@@ -26,6 +26,7 @@ fecha: 2026-07-31
 - [Estructura del repo](#estructura-del-repo)
 - [Flujo end-to-end](#flujo-end-to-end)
 - [Pitfalls vividos](#pitfalls-vividos)
+- [Datos y ejecución operativa](#datos-y-ejecución-operativa)
 - [Checklist de entrega](#checklist-de-entrega)
 - [Referencias](#referencias)
 
@@ -108,7 +109,6 @@ nelsonacosta-ob-ml-propension/
 │   └── data_drift_report/config.yaml
 ├── experiments/*.ipynb         # notebooks EDA + hyperparam tuning
 ├── tests/test_base.py
-├── .claude/skills/             # skills locales del Booster (no LATAM)
 └── .version
 ```
 
@@ -492,6 +492,166 @@ models:
 ```
 
 Tres campos, ni uno más (el YAML rechaza otros). Esto se valida en CI si la version del template lo incluye.
+
+## Datos y ejecución operativa
+
+### Artefactos SQL/Dataform en este repo
+
+Este repo tiene 3 archivos SQL reales que alimentan training, inference y backtest. Se copian sanitizados a `../assets/dataform/ml-propension/`. La fuente autoritativa siempre es GitLab LATAM.
+
+| Path GitLab | Descripción | Copia sanitizada |
+|-------------|-------------|------------------|
+| `assets/training/get_on_boarding_master.sql` | Master table de training (47 cols, `LIMIT 100000`) | [`../assets/dataform/ml-propension/training/get_on_boarding_master.sql`](../assets/dataform/ml-propension/training/get_on_boarding_master.sql) |
+| `assets/inference/get_on_boarding_master.sql` | Master table de inference (mismo schema, sin LIMIT) | [`../assets/dataform/ml-propension/inference/get_on_boarding_master.sql`](../assets/dataform/ml-propension/inference/get_on_boarding_master.sql) |
+| `assets/get_backtest_dataset.sql` | JOIN predictions × ground_truth | [`../assets/dataform/ml-propension/backtest/get_backtest_dataset.sql`](../assets/dataform/ml-propension/backtest/get_backtest_dataset.sql) |
+
+Los tres SQLs usan placeholders Jinja `{project}` y `{dataset}` que se resuelven vía `profiles/application-dev.yaml`. La tabla base es `{project}.{dataset}.development_workspace_hands_on_master_cl` — se lee, no se crea desde este repo.
+
+### Comandos operativos desde la Dell (PowerShell)
+
+Setup inicial (una vez por Dell):
+
+```powershell
+gcloud auth application-default login
+gcloud config set project latam-hands-on-nelsonacosta-ob
+
+# Python + Poetry para levantar el modelo
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install poetry
+poetry install
+```
+
+Ciclo local — smoke test del pipeline:
+
+```powershell
+cd C:\latam\nelsonacosta-ob-ml-propension
+git checkout develop
+
+poetry run python -m ml_propension.pipelines.smoke_test `
+  --profile=application-dev `
+  --project=latam-hands-on-nelsonacosta-ob
+```
+
+Trigger de Vertex AI Pipelines (patrón validado: REST directo a `/v1/pipelineJobs`, no `gcloud ai custom-jobs`):
+
+```powershell
+$PROJECT = "latam-hands-on-nelsonacosta-ob"
+$REGION = "us-east4"
+$TOKEN = (gcloud auth print-access-token)
+$PIPELINE_JSON = "pipeline.json"
+
+# Force manual run (NO usar gcloud ai custom-jobs — usar REST directo)
+$body = @{
+  displayName = "propension-manual-$(Get-Date -Format 'yyyyMMdd-HHmm')"
+  templateUri = "gs://nelsonacosta-ob-pipelines/$PIPELINE_JSON"
+  runtimeConfig = @{
+    gcsOutputDirectory = "gs://nelsonacosta-ob-pipelines/runs/"
+    parameterValues = @{ env = "dev" }
+  }
+} | ConvertTo-Json -Depth 10
+
+# BOM issue: forzar UTF-8 sin BOM
+[System.IO.File]::WriteAllText("$PWD\body.json", $body, [System.Text.UTF8Encoding]::new($false))
+
+curl -X POST `
+  "https://$REGION-aiplatform.googleapis.com/v1/projects/$PROJECT/locations/$REGION/pipelineJobs" `
+  -H "Authorization: Bearer $TOKEN" `
+  -H "Content-Type: application/json; charset=utf-8" `
+  --data-binary "@body.json"
+```
+
+Verificación de artifacts en GCS post-run:
+
+```powershell
+gsutil ls -r gs://nelsonacosta-ob-pipelines/runs/ | Select-Object -Last 20
+gsutil cat gs://nelsonacosta-ob-pipelines/runs/RUN_ID/metrics.json | jq
+```
+
+### Queries de verificación (bq CLI)
+
+Row count de la master table (validar que la ingesta previa corrió):
+
+```powershell
+$Q = @"
+SELECT COUNT(*) AS n,
+       MIN(fecha_particion) AS min_fecha,
+       MAX(fecha_particion) AS max_fecha
+FROM \`latam-hands-on-nelsonacosta-ob.nelsonacosta_ob_dev.development_workspace_hands_on_master_cl\`
+"@
+bq query --use_legacy_sql=false --format=pretty $Q
+```
+
+Schema diff entre training e inference (deben coincidir en cols excepto el `LIMIT`):
+
+```powershell
+bq show --schema --format=prettyjson `
+  latam-hands-on-nelsonacosta-ob:nelsonacosta_ob_dev.training_master `
+  > training_schema.json
+
+bq show --schema --format=prettyjson `
+  latam-hands-on-nelsonacosta-ob:nelsonacosta_ob_dev.inference_master `
+  > inference_schema.json
+
+# Diff col names
+diff (cat training_schema.json | jq -r '.[].name' | sort) `
+     (cat inference_schema.json | jq -r '.[].name' | sort)
+```
+
+Freshness check antes de gatillar un training:
+
+```powershell
+$Q = @"
+SELECT DATE_DIFF(CURRENT_DATE(), MAX(fecha_particion), DAY) AS dias_stale
+FROM \`latam-hands-on-nelsonacosta-ob.nelsonacosta_ob_dev.development_workspace_hands_on_master_cl\`
+HAVING dias_stale > 2
+"@
+bq query --use_legacy_sql=false --format=pretty $Q
+```
+
+Comparación de dos snapshots de predicciones (para backtest):
+
+```powershell
+$Q = @"
+WITH a AS (SELECT customer_id, score FROM \`...predictions_20260728\`),
+     b AS (SELECT customer_id, score FROM \`...predictions_20260731\`)
+SELECT COUNT(*) AS overlap,
+       AVG(ABS(a.score - b.score)) AS mean_abs_delta,
+       CORR(a.score, b.score) AS score_correlation
+FROM a JOIN b USING (customer_id)
+"@
+bq query --use_legacy_sql=false --format=pretty $Q
+```
+
+### Rollback / re-ejecución
+
+Cancelar un `pipelineJob` en curso:
+
+```powershell
+gcloud ai pipeline-jobs cancel PIPELINE_JOB_ID `
+  --region=us-east4 `
+  --project=latam-hands-on-nelsonacosta-ob
+```
+
+Re-correr solo el step de inference (asumiendo pipeline con `enable_caching=true`):
+
+```powershell
+# En pipeline.json, tocar solo el nodo "inference" y re-submitir
+# El caching de KFP reutiliza los artifacts de training del run previo
+```
+
+Bajar el último modelo entrenado para inspección local:
+
+```powershell
+gsutil ls gs://nelsonacosta-ob-pipelines/runs/ | Select-Object -Last 1
+gsutil -m cp -r gs://nelsonacosta-ob-pipelines/runs/RUN_ID/model/ ./last-model/
+```
+
+### Assets sanitizados en este repo de playbooks
+
+- [`../assets/dataform/ml-propension/training/get_on_boarding_master.sql`](../assets/dataform/ml-propension/training/get_on_boarding_master.sql)
+- [`../assets/dataform/ml-propension/inference/get_on_boarding_master.sql`](../assets/dataform/ml-propension/inference/get_on_boarding_master.sql)
+- [`../assets/dataform/ml-propension/backtest/get_backtest_dataset.sql`](../assets/dataform/ml-propension/backtest/get_backtest_dataset.sql)
 
 ## Checklist de entrega
 

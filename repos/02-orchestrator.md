@@ -26,6 +26,7 @@ fecha: 2026-07-31
 - [Estructura del repo](#estructura-del-repo)
 - [Flujo end-to-end](#flujo-end-to-end)
 - [Pitfalls vividos](#pitfalls-vividos)
+- [Datos y ejecución operativa](#datos-y-ejecución-operativa)
 - [Checklist de entrega](#checklist-de-entrega)
 - [Referencias](#referencias)
 
@@ -419,6 +420,92 @@ Después del primer deploy, `terraform apply` sin `-target` ya funciona directo.
 # Please use this file to define all the infrastructure related to your product.
 # DO NOT add anything else to the main.tf file. Instead use this file.
 ```
+
+## Datos y ejecución operativa
+
+### Artefactos SQL/Dataform en este repo
+
+`orchestrator-ob` en `develop` es un **scaffold Dataform vacío**. El árbol `definitions/` contiene solo archivos `.keep` — no hay `.sqlx` ni `.sql` propios. La razón: en el hands-on de propensión las transformaciones SQL productivas viven en `ml-propension/assets/`, no en el orchestrator.
+
+Ver la nota completa en [`../assets/dataform/orchestrator/README.md`](../assets/dataform/orchestrator/README.md).
+
+| Path GitLab | Descripción | Copia sanitizada |
+|-------------|-------------|------------------|
+| `definitions/` | Scaffold vacío en `develop` | [`../assets/dataform/orchestrator/README.md`](../assets/dataform/orchestrator/README.md) |
+| `workflow_settings.yaml` | Config del proyecto Dataform | (sin copia — leer del repo LATAM) |
+| `includes/constants.js` | Constantes de entorno (project, dataset) | (sin copia — leer del repo LATAM) |
+| `includes/policy_tags/dev_policy_tags.js` | Policy tags dev | (sin copia — leer del repo LATAM) |
+
+Los `.sqlx` reales se documentan en [`03-ml-propension.md`](./03-ml-propension.md#datos-y-ejecución-operativa).
+
+### Comandos operativos desde la Dell (PowerShell)
+
+Autenticación e instalación de Dataform CLI (una sola vez):
+
+```powershell
+gcloud auth application-default login
+gcloud config set project latam-hands-on-nelsonacosta-ob
+npm install -g @dataform/cli
+```
+
+Ciclo Dataform desde el root del repo:
+
+```powershell
+cd C:\latam\nelsonacosta-ob-orchestrator
+git checkout develop
+
+# Validar la config y las includes/constants
+dataform compile --json > compile-output.json
+cat compile-output.json | jq '.compilerErrors // "OK"'
+
+# Correr el proyecto (vacío en el scaffold, pero valida el pipeline Dataform end-to-end)
+dataform run --dry-run
+```
+
+Trigger del workflow de Dataform ya desplegado en GCP (creado por Terraform desde este repo o desde infraestructure):
+
+```powershell
+$PROJECT = "latam-hands-on-nelsonacosta-ob"
+$REGION = "us-east4"
+$WORKFLOW = "orchestrator-ob-dataform-workflow"
+
+gcloud workflows run $WORKFLOW --location=$REGION --project=$PROJECT
+gcloud workflows executions list $WORKFLOW --location=$REGION --limit=5
+```
+
+### Queries de verificación (bq CLI)
+
+Comprobar que el repo Dataform en GCP quedó creado y linkeado a `develop`:
+
+```powershell
+gcloud dataform repositories list --region=us-east4 --project=latam-hands-on-nelsonacosta-ob
+gcloud dataform repositories describe orchestrator-ob --region=us-east4 --project=latam-hands-on-nelsonacosta-ob
+```
+
+Listar workspaces del repo Dataform:
+
+```powershell
+gcloud dataform workspaces list --repository=orchestrator-ob --region=us-east4 --project=latam-hands-on-nelsonacosta-ob
+```
+
+### Rollback / re-ejecución
+
+Re-correr solo un tag Dataform (cuando `definitions/` esté poblado):
+
+```powershell
+dataform run --tags=training --vars="env=dev"
+```
+
+Cancelar una ejecución de workflow colgada:
+
+```powershell
+gcloud workflows executions cancel EXECUTION_ID --workflow=$WORKFLOW --location=$REGION
+```
+
+### Assets sanitizados en este repo de playbooks
+
+- [`../assets/dataform/orchestrator/README.md`](../assets/dataform/orchestrator/README.md) — explicación de por qué `definitions/` está vacío
+- [`../assets/dataform/ml-propension/`](../assets/dataform/ml-propension/) — los `.sql` reales que orquesta este scaffold
 
 ## Checklist de entrega
 

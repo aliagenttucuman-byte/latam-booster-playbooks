@@ -56,14 +56,14 @@ else
   echo "   OK"
 fi
 
-# 4. Secciones canonicas (9 nivel 2)
+# 4. Secciones canonicas (10 nivel 2 con "Datos y ejecución operativa")
 SECTIONS=$(grep -c '^## ' "$FILE" || true)
 echo "4. Secciones nivel 2: $SECTIONS"
-if [ "$SECTIONS" -lt 9 ]; then
-  echo "   FAIL: se esperan 9 secciones canonicas minimo"
+if [ "$SECTIONS" -lt 10 ]; then
+  echo "   FAIL: se esperan 10 secciones canonicas minimo"
   FAIL=1
-elif [ "$SECTIONS" -gt 12 ]; then
-  echo "   WARN: mas de 12 secciones, revisar si sobra contenido"
+elif [ "$SECTIONS" -gt 13 ]; then
+  echo "   WARN: mas de 13 secciones, revisar si sobra contenido"
 else
   echo "   OK"
 fi
@@ -107,6 +107,29 @@ if [ $((CODE_BLOCKS % 2)) -ne 0 ]; then
   FAIL=1
 else
   echo "   OK ($((CODE_BLOCKS / 2)) bloques cerrados)"
+fi
+
+# 9. Seccion "Datos y ejecución operativa" con 4 subsecciones canonicas
+OPS=$(grep -cE '^## Datos y ejecuci' "$FILE" || true)
+echo "9. Seccion 'Datos y ejecución operativa': $OPS"
+if [ "$OPS" -lt 1 ]; then
+  echo "   FAIL: falta la seccion operativa canonica"
+  FAIL=1
+else
+  SUB_A=$(grep -cE '^### Artefactos SQL' "$FILE" || true)
+  SUB_C=$(grep -cE '^### Comandos operativos' "$FILE" || true)
+  SUB_Q=$(grep -cE '^### Queries de verificaci' "$FILE" || true)
+  SUB_R=$(grep -cE '^### Rollback' "$FILE" || true)
+  MISS=0
+  [ "$SUB_A" -lt 1 ] && echo "   FAIL: falta '### Artefactos SQL...'" && MISS=1
+  [ "$SUB_C" -lt 1 ] && echo "   FAIL: falta '### Comandos operativos...'" && MISS=1
+  [ "$SUB_Q" -lt 1 ] && echo "   FAIL: falta '### Queries de verificaci...'" && MISS=1
+  [ "$SUB_R" -lt 1 ] && echo "   FAIL: falta '### Rollback...'" && MISS=1
+  if [ "$MISS" -eq 0 ]; then
+    echo "   OK (4 subsecciones presentes)"
+  else
+    FAIL=1
+  fi
 fi
 
 echo

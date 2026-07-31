@@ -35,8 +35,8 @@ Volver al [README](./00-README.md). Terminos: [glosario](./01-glossary.md).
 
 Tener:
 
-- [ ] Cuenta corporativa `nelsonacosta@latam.com` activa (SSO Google LATAM).
-- [ ] Cuenta Globant activa (email `nelson.acosta.globant@latam.com`).
+- [ ] Cuenta corporativa `<TU_EMAIL_CORP>@latam.com` activa (SSO Google LATAM).
+- [ ] Cuenta Globant activa (email `<TU_EMAIL_GLOBANT>@latam.com`).
 - [ ] Aprobado el alta en `ai-sharedservices` (MR mergeado en `gitlab-group-management/gitlab-groups-members`).
 - [ ] Sandbox aprobado por CPM (email de Data Hub).
 - [ ] GCP Project IDs de dev y prod confirmados por CPM (Diego).
@@ -66,7 +66,7 @@ Si falta algo, instalar desde:
 ### 2. Configurar git para el dominio LATAM
 
 ```powershell
-git config --global user.email "nelson.acosta.globant@latam.com"
+git config --global user.email "<TU_EMAIL_GLOBANT>@latam.com"
 git config --global user.name "Nelson Acosta"
 ```
 
@@ -74,7 +74,7 @@ Verificar:
 
 ```powershell
 git config --global user.email
-# debe imprimir nelson.acosta.globant@latam.com, NO @globant.com
+# debe imprimir <TU_EMAIL_GLOBANT>@latam.com, NO @globant.com
 ```
 
 ### 3. GitLab Personal Access Token
@@ -107,7 +107,7 @@ curl.exe -sI -H "PRIVATE-TOKEN: $env:GITLAB_TOKEN" https://gitlab.com/api/v4/use
 ### 4. gcloud auth
 
 ```powershell
-gcloud auth login nelsonacosta@latam.com
+gcloud auth login <TU_EMAIL_CORP>@latam.com
 gcloud auth application-default login
 gcloud config set project <project-id-dev>
 gcloud config set compute/region us-east1
@@ -133,7 +133,7 @@ python -m pip install --upgrade pip
 **NO** persistir la API key en `pip.ini`. Setear como env var en cada sesion:
 
 ```powershell
-$env:ARTIFACTORY_USER = "nelson.acosta.globant"
+$env:ARTIFACTORY_USER = "<TU_USUARIO_GLOBANT>"
 $env:ARTIFACTORY_TOKEN = "<pegar-api-key-aqui>"
 ```
 
@@ -201,7 +201,7 @@ Antes de arrancar `repos/01-infraestructure.md`, todos estos comandos tienen que
 
 ```powershell
 # En la laptop Dell LATAM
-git config --global user.email                    # nelson.acosta.globant@latam.com
+git config --global user.email                    # <TU_EMAIL_GLOBANT>@latam.com
 gcloud config get-value project                   # <project-id-dev>
 gcloud config get-value compute/region            # us-east1
 python --version                                  # 3.10.x o 3.11.x
@@ -262,11 +262,11 @@ Fix: regenerar el PAT con scope `read_repository` + verificar acceso al grupo en
 
 Sintoma: MR rechazado por CI porque el committer no tiene dominio `@latam.com`.
 
-Causa: git config global tiene `@globant.com` en vez de `nelson.acosta.globant@latam.com`.
+Causa: git config global tiene `@globant.com` en vez de `<TU_EMAIL_GLOBANT>@latam.com`.
 
 Fix:
 ```powershell
-git config --global user.email "nelson.acosta.globant@latam.com"
+git config --global user.email "<TU_EMAIL_GLOBANT>@latam.com"
 # Si el commit ya se hizo:
 git commit --amend --reset-author --no-edit
 ```
