@@ -1,0 +1,68 @@
+{
+  "type": "record",
+  "name": "QualityGate",
+  "namespace": "com.latam.ado.datapipelines",
+  "fields": [
+    {
+      "name": "uuid",
+      "type": "string"
+    },
+    {
+      "name": "timestamp",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }
+    },
+    {
+      "name": "team",
+      "type": "string"
+    },
+    {
+      "name": "product",
+      "type": "string"
+    },
+    {
+      "name": "service",
+      "type": "string"
+    },
+    {
+      "name": "payload",
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    {
+      "name": "resource",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "Resource",
+          "fields": [
+            {
+              "name": "type",
+              "type": "string",
+              "default": ""
+            },
+            {
+              "name": "id",
+              "type": "string",
+              "default": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "severity",
+      "type": "string"
+    },
+    {
+      "name": "environment",
+      "type": "string",
+      "default": ""
+    }
+  ]
+}
